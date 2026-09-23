@@ -76,8 +76,10 @@ Duas coisas que o pitch original sugere implicitamente (rastreamento ao vivo tip
 | criado_em / aceito_em / chegada_em / concluido_em | timestamps | para medir SLA (métricas do MVP) |
 
 **Máquina de estados de `status`:**
-`buscando_parceiro` → `aceito` → `a_caminho` → `chegou` → `orcamento_enviado` → `orcamento_aprovado` → `em_atendimento` → `concluido`
-(ramos alternativos: `cancelado_cliente`, `cancelado_parceiro`, `sem_parceiro_disponivel`)
+`buscando_parceiro` → `aceito` → `orcamento_enviado` → `orcamento_aprovado` → `a_caminho` → `chegou` → `em_atendimento` → `concluido`
+(ramos alternativos: `recusado_pelo_cliente` — antes do pagamento, sem custo, pois ninguém se deslocou —, `cancelado_pos_pagamento` — com taxa, técnico já a caminho —, `sem_parceiro_disponivel`)
+
+O orçamento (e a aprovação/cobrança) acontece **antes** de `a_caminho`, não depois — o técnico só sai da loja depois que o cliente já pagou. Essa ordem é deliberada: evita que uma borracharia gaste combustível e tempo indo até um cliente que não concorda com o preço.
 
 ### `Offer` (log de ofertas de despacho — auditoria do matching)
 | Campo | Tipo |
@@ -119,6 +121,7 @@ Duas coisas que o pitch original sugere implicitamente (rastreamento ao vivo tip
 3. Se `recusado` ou `expirado` → criar `Offer` para o próximo da lista.
 4. Se nenhum parceiro aceitar em N minutos → `status = sem_parceiro_disponivel`, notificar cliente (sugerir tentar de novo / expandir raio).
 5. Ao aceite → `ServiceRequest.partner_id` e `technician_id` preenchidos, `status = aceito`.
+6. Parceiro envia orçamento (a partir do `TireCatalogItem` correspondente) → `status = orcamento_enviado`. Cliente aprova → `status = orcamento_aprovado`, o que dispara a cobrança (ver seção 5). **Só depois da confirmação do pagamento** o técnico inicia o deslocamento → `status = a_caminho`.
 
 **Nota:** essa cascata de ofertas com timeout é lógica de fila/evento — em backend próprio isso é um job/worker; no base44, a alternativa realista de MVP é: notificar **todos** os parceiros elegíveis simultaneamente e o primeiro que aceitar "ganha" o pedido (broadcast em vez de cascata sequencial). É uma simplificação aceitável para validar demanda — perde eficiência de ranking, mas funciona sem infraestrutura de filas.
 
@@ -128,10 +131,10 @@ Rastreamento GPS contínuo (pino se movendo em tempo real, tipo Uber) exige atua
 
 **MVP realista:** rastreamento **por etapas de status**, não por coordenadas contínuas:
 - "Buscando borracharia perto de você"
-- "Borracharia X aceitou — ETA estimado Y min"
-- "Técnico a caminho"
-- "Técnico chegou"
+- "Borracharia X aceitou — preparando orçamento"
 - "Orçamento enviado — aprove para continuar"
+- "Pagamento confirmado — técnico a caminho"
+- "Técnico chegou"
 - "Atendimento em andamento"
 - "Concluído"
 
@@ -140,7 +143,7 @@ Isso resolve 90% da ansiedade do cliente sem precisar de infraestrutura de tempo
 ## 5. Pagamento e comissão
 
 - Gateway com suporte a Pix + cartão no Brasil (ex. Mercado Pago, Asaas, Pagar.me).
-- Cobrança acontece **depois** que o cliente aprova o orçamento (`status = orcamento_aprovado`), nunca antes — e nunca fora do app.
+- Cobrança acontece **depois** que o cliente aprova o orçamento (`status = orcamento_aprovado`), nunca antes — e nunca fora do app. E acontece **antes** do técnico se deslocar: assim, ninguém (nem cliente, nem parceiro) perde tempo ou dinheiro com um valor que não foi aceito.
 - **MVP:** cobrança cai na conta da própria plataforma (não split automático); repasse ao parceiro é feito manualmente/em lote (ex. semanal, via Pix), registrado em `Payment.status = repassado`. É mais trabalho operacional, mas evita a complexidade de integrar Stripe Connect/split de marketplace logo de cara — e o base44 não tem isso nativo (ver 05-prompt-base44.md).
 - **Pós-MVP:** migrar para split automático assim que o volume de transações justificar a integração de um gateway marketplace de verdade.
 

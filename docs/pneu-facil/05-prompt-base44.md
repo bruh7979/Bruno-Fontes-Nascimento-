@@ -53,10 +53,13 @@ diretamente pelo app.
   deslocamento, valor do pneu, valor total, comissão da plataforma
   (calcular automaticamente como 15% do valor do pneu), datas de criação/
   aceite/chegada/conclusão.
-  Status possíveis, nesta ordem: buscando parceiro → aceito → a caminho →
-  chegou → orçamento enviado → orçamento aprovado pelo cliente → em
-  atendimento → concluído. Também pode ir para: cancelado pelo cliente,
-  cancelado pelo parceiro, ou sem parceiro disponível.
+  Status possíveis, nesta ordem: buscando parceiro → aceito → orçamento
+  enviado → orçamento aprovado pelo cliente → a caminho → chegou → em
+  atendimento → concluído. O orçamento é enviado e aprovado ANTES do
+  técnico se deslocar, nunca depois. Também pode ir para: recusado pelo
+  cliente (antes do pagamento, sem custo, pois ninguém se deslocou ainda),
+  cancelado pelo cliente (depois de pago, com taxa), ou sem parceiro
+  disponível.
 - Pagamento: vinculado ao pedido, valor total, valor da comissão, valor a
   repassar ao parceiro, status (pendente / pago / repassado / estornado).
 - Avaliação: vinculada ao pedido, nota de 1 a 5, comentário, autor
@@ -73,18 +76,20 @@ diretamente pelo app.
    simultaneamente sobre o novo pedido — o primeiro parceiro que aceitar
    fica responsável pelo pedido, os demais deixam de ver o pedido como
    disponível.
-5. Depois do aceite, o cliente acompanha o pedido por uma tela de status
-   (lista de etapas, sem mapa com localização em tempo real) mostrando a
-   etapa atual: a caminho, chegou, orçamento enviado, etc.
-6. Quando o parceiro envia o orçamento (valor do pneu + taxa de
-   deslocamento, com o total calculado automaticamente), o cliente vê o
-   detalhamento e precisa aprovar explicitamente antes de qualquer
-   cobrança ou execução do serviço. Nunca cobrar ou considerar o serviço
-   iniciado sem essa aprovação.
-7. Após aprovação, processar o pagamento via Stripe (Pix ou cartão) pelo
+5. Assim que a borracharia aceita, ela envia o orçamento (valor do pneu, a
+   partir do próprio estoque cadastrado, + taxa de deslocamento, com o
+   total calculado automaticamente) — isso acontece ANTES de qualquer
+   deslocamento do técnico. O cliente vê o detalhamento e precisa aprovar
+   explicitamente. Se recusar, o pedido é cancelado sem custo, porque o
+   técnico ainda não saiu da loja.
+6. Após a aprovação, processar o pagamento via Stripe (Pix ou cartão) pelo
    valor total. O pagamento fica registrado como "pago" para a
    plataforma — o repasse ao parceiro é um passo manual feito pelo admin
-   depois (não é split automático).
+   depois (não é split automático). Só depois do pagamento confirmado o
+   técnico inicia o deslocamento até o cliente.
+7. O cliente acompanha o pedido por uma tela de status (lista de etapas,
+   sem mapa com localização em tempo real) mostrando a etapa atual: a
+   caminho, chegou, em atendimento.
 8. Após o parceiro marcar "concluído", liberar a tela de avaliação para o
    cliente (e também uma tela de avaliação do cliente pelo parceiro).
 
@@ -98,12 +103,13 @@ diretamente pelo app.
    o parceiro disponível), mostrar notificação com distância e tipo de
    veículo, e um botão de aceitar. Se outro parceiro aceitar primeiro, o
    pedido deve sumir da lista deste parceiro.
-4. Após aceitar, o parceiro pode avançar o status do pedido manualmente
-   pelas etapas (a caminho → chegou → orçamento enviado → em atendimento
-   → concluído).
-5. Na etapa de orçamento, o parceiro escolhe um item do próprio estoque
-   cadastrado (puxando o preço automaticamente) ou lança um valor avulso
-   com justificativa em texto.
+4. Ao aceitar, o parceiro é levado direto para a tela de orçamento: escolhe
+   um item do próprio estoque cadastrado (puxando o preço automaticamente)
+   ou lança um valor avulso com justificativa em texto, e envia para o
+   cliente aprovar — tudo isso antes de sair da loja.
+5. Só depois que o cliente aprovar e o pagamento for confirmado, o parceiro
+   avança o status do pedido pelas etapas seguintes (a caminho → chegou →
+   em atendimento → concluído).
 6. Painel financeiro mostrando pedidos concluídos, valores totais, e
    status de repasse (pago pela plataforma / repassado ao parceiro),
    mesmo sendo esse repasse controlado manualmente pelo admin.
@@ -127,9 +133,11 @@ diretamente pelo app.
   sobre a taxa de deslocamento).
 - Nenhuma cobrança pode acontecer antes do cliente aprovar explicitamente
   o orçamento.
-- Se o cliente cancelar um pedido depois que o parceiro já aceitou,
-  cobrar uma taxa fixa de cancelamento (usar um valor configurável, por
-  exemplo R$ 20) e registrar o pedido como "cancelado pelo cliente".
+- Recusar o orçamento antes do pagamento é sempre gratuito (o técnico
+  ainda não saiu da loja). Se o cliente cancelar depois de já ter pago
+  (com o técnico a caminho), cobrar uma taxa fixa de cancelamento (usar um
+  valor configurável, por exemplo R$ 20) e registrar o pedido como
+  "cancelado pelo cliente".
 - Um pedido só pode ser aceito por um parceiro por vez.
 
 ## Visual

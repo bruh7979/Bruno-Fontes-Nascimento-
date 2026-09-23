@@ -19,11 +19,11 @@ Este documento assume as correções feitas em [01-analise-critica.md](./01-anal
 4. App mostra: taxa de deslocamento estimada + lista de borracharias parceiras próximas com ETA estimado (não promete "50 min" como número fixo — ver análise crítica, item 4).
 5. Cliente confirma o pedido → pedido entra em **fila de despacho**.
 6. Sistema oferece o pedido à borracharia mais bem ranqueada (distância + disponibilidade + rating) por um tempo limite (ex. 45s). Se recusar/não responder, cai em cascata pra próxima.
-7. Borracharia aceita → cliente vê: nome da borracharia, foto do técnico, nota, ETA, e pode acompanhar o status.
-8. Técnico chega → confirma chegada no app → avalia o pneu → lança o **orçamento final** (a partir do estoque pré-cadastrado ou preço avulso).
-9. Cliente **aprova o orçamento dentro do app** antes de qualquer troca ser feita.
-10. Troca realizada → técnico marca "concluído".
-11. Cobrança automática (Pix/cartão) do valor total (pneu + taxa) → plataforma retém comissão → repassa o restante à borracharia.
+7. Borracharia aceita → cliente vê: nome da borracharia, foto do técnico, nota, ETA.
+8. Borracharia envia o **orçamento** (a partir do estoque pré-cadastrado, com base no veículo/pneu informado). Cliente **aprova dentro do app antes de qualquer deslocamento** — o técnico só sai da loja depois da aprovação. Se o cliente recusar, o pedido é cancelado sem custo, porque ninguém se deslocou ainda.
+9. Após a aprovação, cobrança automática (Pix/cartão) do valor total (pneu + taxa) → plataforma retém comissão → repassa o restante à borracharia.
+10. Só então o técnico se desloca até o cliente → cliente acompanha por status (a caminho / chegou).
+11. Troca realizada no local → técnico marca "concluído".
 12. Cliente avalia o atendimento (nota + comentário).
 
 ## 3. O que fica **fora** do MVP (cortes deliberados)
@@ -54,7 +54,8 @@ Cortar isso não é limitação técnica — é para não morrer tentando valida
 ## 6. Regras de negócio críticas (não são "nice to have")
 
 - **Preço nunca é surpresa total**: borracharia cadastra estoque com preço de referência OU o cliente precisa aprovar explicitamente o valor antes da execução do serviço.
-- **Taxa de cancelamento pós-aceite**: se o cliente cancelar depois que o técnico confirmou saída, cobra uma taxa mínima (repassada em parte à borracharia).
+- **Recusar o orçamento é gratuito**: como isso acontece antes de qualquer deslocamento, ninguém perde dinheiro.
+- **Taxa de cancelamento pós-pagamento**: se o cliente cancelar depois de já ter pago (técnico a caminho), cobra uma taxa mínima (repassada em parte à borracharia).
 - **Timeout de oferta em cascata**: pedido não fica "preso" numa borracharia que não responde.
 - **Nenhum pagamento fora do app** no fluxo oficial (mesmo que tecnicamente alguém possa tentar combinar por fora — o app não deve facilitar isso; é o que garante comissão e proteção a ambos os lados).
 

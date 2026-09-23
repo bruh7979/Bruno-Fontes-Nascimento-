@@ -21,9 +21,9 @@ Consequência de design: **botões grandes, poucos passos, texto curto, nada de 
 3. **Formulário rápido** — tipo de veículo, medida do pneu (se souber) ou foto, confirmação do pino no mapa.
 4. **Tela de busca** — animação simples de "procurando borracharia perto de você" (não precisa ser radar sofisticado — um spinner com texto já resolve).
 5. **Tela de match** — foto/nome da borracharia, nota, ETA estimado, botão de contato (telefone/WhatsApp).
-6. **Tela de acompanhamento por status** (ver 03-backend.md item 4 — sem GPS ao vivo no MVP): lista vertical de etapas com a atual destacada.
-7. **Tela de orçamento** — valor do pneu + taxa de deslocamento, breakdown claro, botão "Aprovar" / "Recusar".
-8. **Tela de pagamento** — Pix/cartão, confirmação.
+6. **Tela de orçamento** — valor do pneu + taxa de deslocamento, breakdown claro, botão "Aprovar" / "Recusar". Aparece **antes** do técnico sair da loja — nunca depois.
+7. **Tela de pagamento** — Pix/cartão, confirmação. A cobrança acontece aqui, logo após a aprovação, e é o gatilho para o deslocamento começar.
+8. **Tela de acompanhamento por status** (ver 03-backend.md item 4 — sem GPS ao vivo no MVP): lista vertical de etapas com a atual destacada (a caminho, chegou).
 9. **Tela de avaliação** — nota + comentário opcional.
 
 ## 4. Inventário de telas — Borracharia parceira
@@ -45,6 +45,6 @@ Consequência de design: **botões grandes, poucos passos, texto curto, nada de 
 
 ## 6. Princípios de UX que não são negociáveis (decorrem direto da análise crítica)
 
-- **Preço nunca aparece "do nada" no fim** — sempre há uma faixa antes do despacho e um orçamento explícito a aprovar antes da execução.
+- **Preço nunca aparece "do nada" no fim** — e nunca depois que o técnico já saiu da loja. A aprovação (e o pagamento) acontecem assim que a borracharia é encontrada, antes de qualquer deslocamento.
 - **Nunca esconder que o pagamento é pelo app** — isso não é só técnico, é uma mensagem de confiança pro cliente ("seu dinheiro só é liberado pra borracharia depois que o serviço é confirmado").
 - **Status sempre visível** — cliente nunca deve ficar sem saber "o que está acontecendo agora" (ansiedade é o principal risco de churn nesse tipo de produto).
