@@ -48,14 +48,15 @@ Duas coisas que o pitch original sugere implicitamente (rastreamento ao vivo tip
 | status | enum: disponivel, em_atendimento, offline |
 
 ### `TireCatalogItem` (estoque/preço de referência — mitiga o risco de preço abusivo)
-| Campo | Tipo |
-|---|---|
-| id | uuid |
-| partner_id | FK → Partner |
-| medida | string |
-| marca | string |
-| preco | number |
-| estoque_disponivel | boolean |
+| Campo | Tipo | Nota |
+|---|---|---|
+| id | uuid | |
+| partner_id | FK → Partner | |
+| medida | string | |
+| marca | string | |
+| tipo | enum: novo, meia_vida | pneu novo tem preço de tabela estável; meia-vida é o que sobrou no pátio naquele dia |
+| preco | number | pra `meia_vida`, tratar como estimativa — estoque real é confirmado no momento da escolha (ver seção 3) |
+| estoque_disponivel | boolean | |
 
 ### `ServiceRequest` (pedido — entidade central)
 | Campo | Tipo | Nota |
@@ -73,23 +74,30 @@ Duas coisas que o pitch original sugere implicitamente (rastreamento ao vivo tip
 | valor_pneu | number, nullable | preenchido no orçamento |
 | valor_total | number | |
 | comissao_plataforma | number | calculada |
+| codigo_confirmacao | string (4 dígitos) | gerado ao aprovar o orçamento, mostrado na tela do cliente; técnico digita no próprio app pra marcar `concluido` |
 | criado_em / aceito_em / chegada_em / concluido_em | timestamps | para medir SLA (métricas do MVP) |
 
 **Máquina de estados de `status`:**
-`buscando_parceiro` → `aceito` → `orcamento_enviado` → `orcamento_aprovado` → `a_caminho` → `chegou` → `em_atendimento` → `concluido`
+`buscando_parceiro` → `opcoes_apresentadas` → `aceito` → `orcamento_enviado` → `orcamento_aprovado` → `a_caminho` → `chegou` → `em_atendimento` → `concluido`
 (ramos alternativos: `recusado_pelo_cliente` — antes do pagamento, sem custo, pois ninguém se deslocou —, `cancelado_pos_pagamento` — com taxa, técnico já a caminho —, `sem_parceiro_disponivel`)
+
+`concluido` só é atingido com o `codigo_confirmacao` correto digitado pelo técnico — é o que libera o repasse (ver seção 5).
 
 O orçamento (e a aprovação/cobrança) acontece **antes** de `a_caminho`, não depois — o técnico só sai da loja depois que o cliente já pagou. Essa ordem é deliberada: evita que uma borracharia gaste combustível e tempo indo até um cliente que não concorda com o preço.
 
-### `Offer` (log de ofertas de despacho — auditoria do matching)
-| Campo | Tipo |
-|---|---|
-| id | uuid |
-| service_request_id | FK |
-| partner_id | FK |
-| ofertado_em | timestamp |
-| expira_em | timestamp |
-| resposta | enum: aceito, recusado, expirado |
+### `Offer` (as opções apresentadas ao cliente — não é mais uma cascata de convites, ver seção 3)
+| Campo | Tipo | Nota |
+|---|---|---|
+| id | uuid | |
+| service_request_id | FK | |
+| partner_id | FK | |
+| tire_catalog_item_id | FK | |
+| preco_pneu | number | congelado no momento em que foi mostrado ao cliente |
+| taxa_deslocamento | number | |
+| distancia_km | number | |
+| eta_min | number | |
+| escolhida | boolean | |
+| confirmada_pelo_parceiro | enum: pendente, confirmada, recusada, expirada | janela curta pós-escolha (ver seção 3) |
 
 ### `Payment`
 | Campo | Tipo |
@@ -111,31 +119,33 @@ O orçamento (e a aprovação/cobrança) acontece **antes** de `a_caminho`, não
 | comentario | string |
 | autor | enum: cliente, parceiro (avaliação é dos dois lados) |
 
-## 3. Lógica de despacho (matching) — o coração do sistema
+## 3. Lógica de matching — o coração do sistema
 
-1. Ao criar `ServiceRequest`, buscar `Partner` com status `ativo`, dentro do `raio_atuacao_km`, ordenados por:
-   - distância (menor primeiro)
-   - disponibilidade (tem `Technician` com status `disponivel`)
-   - `rating_medio` (desempate)
-2. Criar `Offer` para o parceiro top-ranked, com prazo de expiração (ex. 45s).
-3. Se `recusado` ou `expirado` → criar `Offer` para o próximo da lista.
-4. Se nenhum parceiro aceitar em N minutos → `status = sem_parceiro_disponivel`, notificar cliente (sugerir tentar de novo / expandir raio).
-5. Ao aceite → `ServiceRequest.partner_id` e `technician_id` preenchidos, `status = aceito`.
-6. Parceiro envia orçamento (a partir do `TireCatalogItem` correspondente) → `status = orcamento_enviado`. Cliente aprova → `status = orcamento_aprovado`, o que dispara a cobrança (ver seção 5). **Só depois da confirmação do pagamento** o técnico inicia o deslocamento → `status = a_caminho`.
+Esse fluxo mudou de "despacho automático em cascata" (o sistema escolhe sozinho, tipo Uber) para "lista curta pré-filtrada" (o sistema faz o trabalho pesado de filtrar, mas o cliente escolhe entre poucas opções, sem perder velocidade). Ver análise crítica pra justificativa dessa escolha.
 
-**Nota:** essa cascata de ofertas com timeout é lógica de fila/evento — em backend próprio isso é um job/worker; no base44, a alternativa realista de MVP é: notificar **todos** os parceiros elegíveis simultaneamente e o primeiro que aceitar "ganha" o pedido (broadcast em vez de cascata sequencial). É uma simplificação aceitável para validar demanda — perde eficiência de ranking, mas funciona sem infraestrutura de filas.
+1. Ao confirmar veículo/pneu, buscar `Partner` com status `ativo`, dentro do `raio_atuacao_km`, com `TireCatalogItem` compatível com a medida informada (ou "a confirmar" se o cliente só enviou foto).
+2. Pra cada candidato, calcular preço total (pneu + taxa), distância e ETA. Rankear por uma pontuação combinada (peso em preço, distância e rating) e selecionar os **3 melhores** → criar um `Offer` (congelando preço/distância/ETA) pra cada um.
+3. Mostrar os 3 `Offer` ao cliente como opções lado a lado. Cliente escolhe uma → `Offer.escolhida = true`.
+4. A borracharia escolhida recebe uma janela curta (ex. 60s) pra confirmar (`Offer.confirmada_pelo_parceiro`) — o estoque de pneu meia-vida muda o tempo todo, então o preço/disponibilidade podem ter mudado desde que foi calculado no passo 2.
+5. Se `recusada` ou `expirada` → marcar essa opção como indisponível e automaticamente oferecer ao cliente a próxima melhor da lista original (sem refazer a busca do zero). Se as 3 esgotarem → `status = sem_parceiro_disponivel`, notificar cliente (sugerir tentar de novo / expandir raio).
+6. Ao confirmar → `ServiceRequest.partner_id` e `technician_id` preenchidos, `status = aceito`, `status = orcamento_enviado` (repetindo pro cliente o mesmo preço que ele já tinha visto, como confirmação final). Cliente aprova → `status = orcamento_aprovado`, o que dispara a cobrança e gera o `codigo_confirmacao` (ver seção 5). **Só depois da confirmação do pagamento** o técnico inicia o deslocamento → `status = a_caminho`.
+7. No local, o técnico digita o `codigo_confirmacao` (mostrado na tela do cliente) no próprio app pra marcar `concluido`. Isso é o gatilho que libera o repasse (ver seção 5) — sem o código certo, o pedido não fecha.
+
+**Nota de implementação:** no base44, os passos 2–5 (ranking + janela de confirmação com fallback automático) são a parte mais difícil de replicar fora de um backend customizado, porque exigem lógica condicional em cadeia. Uma simplificação aceitável pro MVP no base44: pular a "janela de confirmação" do passo 4 (assumir que a borracharia escolhida sempre está disponível) e aceitar o risco de, raramente, o técnico precisar avisar o cliente por telefone que o item mudou — não é ideal, mas evita construir uma máquina de estados complexa numa ferramenta no-code.
 
 ## 4. Rastreamento — o que é realista no MVP
 
 Rastreamento GPS contínuo (pino se movendo em tempo real, tipo Uber) exige atualização de localização a cada poucos segundos e um canal realtime (websocket) — isso é razoável em Supabase/Firebase/backend custom, mas **não é o padrão do base44**.
 
 **MVP realista:** rastreamento **por etapas de status**, não por coordenadas contínuas:
-- "Buscando borracharia perto de você"
-- "Borracharia X aceitou — preparando orçamento"
+- "Buscando as melhores opções perto de você"
+- "Escolha uma borracharia" (lista curta com preço)
+- "Borracharia X confirmou — preparando orçamento"
 - "Orçamento enviado — aprove para continuar"
 - "Pagamento confirmado — técnico a caminho"
 - "Técnico chegou"
 - "Atendimento em andamento"
+- "Aguardando código de confirmação"
 - "Concluído"
 
 Isso resolve 90% da ansiedade do cliente sem precisar de infraestrutura de tempo real geoespacial. Rastreamento ao vivo no mapa fica pro roadmap pós-MVP (ver 02-mvp-escopo.md, item 8).
@@ -145,6 +155,7 @@ Isso resolve 90% da ansiedade do cliente sem precisar de infraestrutura de tempo
 - Gateway com suporte a Pix + cartão no Brasil (ex. Mercado Pago, Asaas, Pagar.me).
 - Cobrança acontece **depois** que o cliente aprova o orçamento (`status = orcamento_aprovado`), nunca antes — e nunca fora do app. E acontece **antes** do técnico se deslocar: assim, ninguém (nem cliente, nem parceiro) perde tempo ou dinheiro com um valor que não foi aceito.
 - **MVP:** cobrança cai na conta da própria plataforma (não split automático); repasse ao parceiro é feito manualmente/em lote (ex. semanal, via Pix), registrado em `Payment.status = repassado`. É mais trabalho operacional, mas evita a complexidade de integrar Stripe Connect/split de marketplace logo de cara — e o base44 não tem isso nativo (ver 05-prompt-base44.md).
+- **Gatilho do repasse:** mesmo sendo manual/em lote, um pedido só entra na lista de "elegível pra repasse" depois que `ServiceRequest.status = concluido`, ou seja, depois que o técnico digitou o `codigo_confirmacao` correto. Isso evita repassar dinheiro por um serviço que não foi confirmado como realizado no local.
 - **Pós-MVP:** migrar para split automático assim que o volume de transações justificar a integração de um gateway marketplace de verdade.
 
 ## 6. APIs / operações principais (independente de stack)

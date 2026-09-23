@@ -15,16 +15,14 @@ Este documento assume as correções feitas em [01-analise-critica.md](./01-anal
 
 1. Cliente abre o app → autoriza localização.
 2. Cliente toca em **"Preciso de troca de pneu"**.
-3. Formulário rápido: tipo de veículo (carro/moto/utilitário), medida do pneu (se souber) ou foto do pneu, localização confirmada (pino no mapa, ajustável).
-4. App mostra: taxa de deslocamento estimada + lista de borracharias parceiras próximas com ETA estimado (não promete "50 min" como número fixo — ver análise crítica, item 4).
-5. Cliente confirma o pedido → pedido entra em **fila de despacho**.
-6. Sistema oferece o pedido à borracharia mais bem ranqueada (distância + disponibilidade + rating) por um tempo limite (ex. 45s). Se recusar/não responder, cai em cascata pra próxima.
-7. Borracharia aceita → cliente vê: nome da borracharia, foto do técnico, nota, ETA.
-8. Borracharia envia o **orçamento** (a partir do estoque pré-cadastrado, com base no veículo/pneu informado). Cliente **aprova dentro do app antes de qualquer deslocamento** — o técnico só sai da loja depois da aprovação. Se o cliente recusar, o pedido é cancelado sem custo, porque ninguém se deslocou ainda.
-9. Após a aprovação, cobrança automática (Pix/cartão) do valor total (pneu + taxa) → plataforma retém comissão → repassa o restante à borracharia.
-10. Só então o técnico se desloca até o cliente → cliente acompanha por status (a caminho / chegou).
-11. Troca realizada no local → técnico marca "concluído".
-12. Cliente avalia o atendimento (nota + comentário).
+3. Formulário rápido: tipo de veículo (carro/moto/utilitário), **foto do pneu com um guia visual** mostrando onde fica a medida gravada na lateral (reduz o erro clássico de "pneu errado" — o campo de texto "medida, se souber" continua existindo, mas como alternativa secundária, não principal), localização confirmada (pino no mapa, ajustável).
+4. Cliente confirma o pedido. O sistema calcula, entre as borracharias ativas na região com estoque compatível, as **3 melhores opções** por uma combinação de preço + distância + nota (não é uma lista completa pra "navegar o catálogo" — ver análise crítica, seção sobre modelo de match).
+5. Cliente vê essas 3 opções lado a lado, cada uma já com: nome, nota, distância, ETA, **preço do pneu (identificando se é meia-vida ou novo) + taxa de deslocamento + total**. Cliente escolhe uma.
+6. A borracharia escolhida tem uma janela curta (ex. 60s) pra confirmar — o estoque de pneu meia-vida muda o tempo todo, então pode não estar mais disponível. Se recusar/expirar, o sistema remove essa opção e oferece a próxima melhor da lista original, sem o cliente precisar refazer a busca.
+7. Borracharia confirma → cliente vê o resumo final (o mesmo preço que já tinha visto) e **aprova explicitamente antes de pagar** — nada é cobrado sem esse passo, e recusar aqui não custa nada porque ninguém se deslocou ainda.
+8. Após a aprovação, cobrança automática (Pix/cartão) do valor total (pneu + taxa) → plataforma retém comissão. Só então o técnico se desloca até o cliente → cliente acompanha por status (a caminho / chegou).
+9. Troca realizada no local. Antes de marcar "concluído", o técnico precisa digitar no próprio app um **código de confirmação** que está sendo exibido na tela do cliente — isso é o que libera o repasse do pagamento para a borracharia.
+10. Cliente avalia o atendimento (nota + comentário).
 
 ## 3. O que fica **fora** do MVP (cortes deliberados)
 
@@ -56,7 +54,8 @@ Cortar isso não é limitação técnica — é para não morrer tentando valida
 - **Preço nunca é surpresa total**: borracharia cadastra estoque com preço de referência OU o cliente precisa aprovar explicitamente o valor antes da execução do serviço.
 - **Recusar o orçamento é gratuito**: como isso acontece antes de qualquer deslocamento, ninguém perde dinheiro.
 - **Taxa de cancelamento pós-pagamento**: se o cliente cancelar depois de já ter pago (técnico a caminho), cobra uma taxa mínima (repassada em parte à borracharia).
-- **Timeout de oferta em cascata**: pedido não fica "preso" numa borracharia que não responde.
+- **Confirmação de estoque com janela curta**: a borracharia escolhida tem um prazo curto pra confirmar (o estoque de meia-vida muda o tempo todo); se não confirmar, o pedido cai pra próxima opção da lista automaticamente — nunca fica "preso".
+- **Repasse condicionado ao código de confirmação**: o pagamento só é liberado pra borracharia depois que o técnico digita, no próprio app, o código mostrado na tela do cliente. Isso impede marcar "concluído" sem o serviço ter sido realmente feito no local.
 - **Nenhum pagamento fora do app** no fluxo oficial (mesmo que tecnicamente alguém possa tentar combinar por fora — o app não deve facilitar isso; é o que garante comissão e proteção a ambos os lados).
 
 ## 7. Métricas de sucesso do MVP (o que decide se a ideia funciona)

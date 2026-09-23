@@ -45,23 +45,36 @@ diretamente pelo app.
   (upload), nota média.
 - Técnico: nome, foto, telefone, vinculado a um Parceiro, status
   (disponível / em atendimento / offline).
-- Item de estoque de pneu: medida, marca, preço, disponibilidade,
+- Item de estoque de pneu: medida, marca, tipo (novo ou meia-vida — pneu
+  novo tem preço de tabela estável, meia-vida é o que sobrou no pátio
+  naquele dia e deve ser tratado como estimativa), preço, disponibilidade,
   vinculado a um Parceiro.
+- Opção apresentada: entidade que guarda cada uma das opções mostradas ao
+  cliente antes de ele escolher — pedido, parceiro, item de estoque,
+  preço do pneu, taxa de deslocamento, distância, ETA em minutos, se foi
+  a escolhida. Serve pra "congelar" o preço no momento em que foi mostrado
+  ao cliente.
 - Pedido de atendimento (entidade central): cliente, veículo, endereço/
   localização do atendimento, descrição do problema, foto do pneu
-  (opcional), parceiro designado, técnico designado, status, taxa de
-  deslocamento, valor do pneu, valor total, comissão da plataforma
-  (calcular automaticamente como 15% do valor do pneu), datas de criação/
-  aceite/chegada/conclusão.
-  Status possíveis, nesta ordem: buscando parceiro → aceito → orçamento
-  enviado → orçamento aprovado pelo cliente → a caminho → chegou → em
-  atendimento → concluído. O orçamento é enviado e aprovado ANTES do
-  técnico se deslocar, nunca depois. Também pode ir para: recusado pelo
-  cliente (antes do pagamento, sem custo, pois ninguém se deslocou ainda),
-  cancelado pelo cliente (depois de pago, com taxa), ou sem parceiro
-  disponível.
+  (opcional, mas incentivada — ver fluxo do cliente), parceiro designado,
+  técnico designado, status, taxa de deslocamento, valor do pneu, valor
+  total, comissão da plataforma (calcular automaticamente como 15% do
+  valor do pneu), código de confirmação (4 dígitos, gerado quando o
+  cliente aprova o orçamento), datas de criação/aceite/chegada/conclusão.
+  Status possíveis, nesta ordem: buscando parceiro → opções apresentadas →
+  aceito → orçamento enviado → orçamento aprovado pelo cliente → a caminho
+  → chegou → em atendimento → concluído. O orçamento é enviado e aprovado
+  ANTES do técnico se deslocar, nunca depois. "Concluído" só é alcançado
+  quando o técnico digita, no próprio app, o código de confirmação que
+  está sendo mostrado na tela do cliente. Também pode ir para: recusado
+  pelo cliente (antes do pagamento, sem custo, pois ninguém se deslocou
+  ainda), cancelado pelo cliente (depois de pago, com taxa), ou sem
+  parceiro disponível.
 - Pagamento: vinculado ao pedido, valor total, valor da comissão, valor a
   repassar ao parceiro, status (pendente / pago / repassado / estornado).
+  Um pedido só pode entrar na lista de "elegível pra repasse" depois que
+  o pedido estiver com status concluído (ou seja, com o código de
+  confirmação validado).
 - Avaliação: vinculada ao pedido, nota de 1 a 5, comentário, autor
   (cliente ou parceiro — os dois avaliam um ao outro).
 
@@ -69,29 +82,44 @@ diretamente pelo app.
 
 1. Cliente faz login e autoriza localização.
 2. Tela inicial com um botão grande e único: "Preciso de troca de pneu".
-3. Formulário curto: tipo de veículo, medida do pneu (opcional) ou foto,
-   confirmação do endereço/localização.
-4. Ao confirmar, o sistema mostra os parceiros ativos mais próximos
-   (ordenados por distância) e notifica todos os parceiros elegíveis
-   simultaneamente sobre o novo pedido — o primeiro parceiro que aceitar
-   fica responsável pelo pedido, os demais deixam de ver o pedido como
-   disponível.
-5. Assim que a borracharia aceita, ela envia o orçamento (valor do pneu, a
-   partir do próprio estoque cadastrado, + taxa de deslocamento, com o
-   total calculado automaticamente) — isso acontece ANTES de qualquer
-   deslocamento do técnico. O cliente vê o detalhamento e precisa aprovar
-   explicitamente. Se recusar, o pedido é cancelado sem custo, porque o
-   técnico ainda não saiu da loja.
-6. Após a aprovação, processar o pagamento via Stripe (Pix ou cartão) pelo
-   valor total. O pagamento fica registrado como "pago" para a
-   plataforma — o repasse ao parceiro é um passo manual feito pelo admin
-   depois (não é split automático). Só depois do pagamento confirmado o
-   técnico inicia o deslocamento até o cliente.
-7. O cliente acompanha o pedido por uma tela de status (lista de etapas,
+3. Formulário curto: tipo de veículo; upload de uma foto do pneu (com uma
+   ilustração/instrução na tela mostrando que a medida fica gravada na
+   lateral do pneu — isso é a forma principal de identificar a medida
+   certa); um campo de texto "medida, se souber" como alternativa
+   secundária; confirmação do endereço/localização.
+4. Ao confirmar, calcular entre os parceiros ativos na região (com estoque
+   compatível) as 3 melhores opções, combinando preço + distância + nota,
+   e criar um registro de "opção apresentada" pra cada uma (congelando o
+   preço do pneu, a taxa de deslocamento, a distância e o ETA no momento
+   em que foram calculados).
+5. Mostrar essas 3 opções ao cliente lado a lado: nome da borracharia,
+   nota, distância, ETA, um selo indicando se o pneu é "novo" (preço
+   fixo) ou "meia-vida" (marcado como "sujeito à conferência no
+   estoque"), preço do pneu + taxa + total. NÃO mostrar uma lista longa
+   de todas as borracharias disponíveis — só essas 3, pra manter a
+   experiência rápida. O cliente escolhe uma.
+6. A borracharia escolhida vira a designada no pedido. Mostrar ao cliente
+   uma tela de confirmação final repetindo o mesmo preço que ele já tinha
+   visto (breakdown: valor do pneu + taxa de deslocamento + total) com
+   botões "Aprovar" / "Recusar" — isso acontece ANTES de qualquer
+   deslocamento do técnico. Se recusar, o pedido é cancelado sem custo,
+   porque o técnico ainda não saiu da loja.
+7. Após a aprovação, gerar um código de confirmação de 4 dígitos pro
+   pedido e processar o pagamento via Stripe (Pix ou cartão) pelo valor
+   total. O pagamento fica registrado como "pago" para a plataforma — o
+   repasse ao parceiro é um passo manual feito pelo admin depois (não é
+   split automático), e só deve ficar disponível pra repasse depois que o
+   pedido estiver "concluído" (passo 9). Só depois do pagamento confirmado
+   o técnico inicia o deslocamento até o cliente.
+8. O cliente acompanha o pedido por uma tela de status (lista de etapas,
    sem mapa com localização em tempo real) mostrando a etapa atual: a
-   caminho, chegou, em atendimento.
-8. Após o parceiro marcar "concluído", liberar a tela de avaliação para o
-   cliente (e também uma tela de avaliação do cliente pelo parceiro).
+   caminho, chegou, em atendimento. Quando a troca começar, mostrar em
+   destaque o código de confirmação de 4 dígitos gerado no passo 7, com a
+   instrução de mostrá-lo ao técnico ao final do serviço.
+9. O parceiro só pode marcar o pedido como "concluído" depois de digitar,
+   no próprio app dele, o código de confirmação correto. Só então liberar
+   a tela de avaliação para o cliente (e também uma tela de avaliação do
+   cliente pelo parceiro).
 
 ## Fluxo do parceiro (borracharia)
 
@@ -99,20 +127,25 @@ diretamente pelo app.
    "pendente de aprovação" até um admin aprovar manualmente.
 2. Depois de aprovado: painel com toggle "Disponível para chamados" /
    "Pausado".
-3. Quando surge um novo pedido elegível (dentro do raio de atuação e com
-   o parceiro disponível), mostrar notificação com distância e tipo de
-   veículo, e um botão de aceitar. Se outro parceiro aceitar primeiro, o
-   pedido deve sumir da lista deste parceiro.
-4. Ao aceitar, o parceiro é levado direto para a tela de orçamento: escolhe
-   um item do próprio estoque cadastrado (puxando o preço automaticamente)
-   ou lança um valor avulso com justificativa em texto, e envia para o
-   cliente aprovar — tudo isso antes de sair da loja.
+3. Quando o cliente escolhe essa borracharia numa das 3 opções, mostrar uma
+   notificação com um prazo curto pra confirmar (ex. 60s) — o parceiro já
+   sabe o item de estoque e o preço que foram mostrados ao cliente, só
+   precisa confirmar que ainda está disponível. Se não confirmar a tempo,
+   o pedido passa para a próxima opção da lista do cliente automaticamente.
+4. Depois de confirmar, o parceiro só acompanha o pedido — o orçamento já
+   foi definido a partir do item de estoque escolhido, não precisa ser
+   digitado de novo.
 5. Só depois que o cliente aprovar e o pagamento for confirmado, o parceiro
    avança o status do pedido pelas etapas seguintes (a caminho → chegou →
-   em atendimento → concluído).
-6. Painel financeiro mostrando pedidos concluídos, valores totais, e
-   status de repasse (pago pela plataforma / repassado ao parceiro),
-   mesmo sendo esse repasse controlado manualmente pelo admin.
+   em atendimento).
+6. Pra marcar o pedido como "concluído", o parceiro precisa digitar o
+   código de confirmação de 4 dígitos que o cliente está vendo na tela
+   dele. Sem o código certo, o pedido não pode ser fechado.
+7. Painel financeiro mostrando pedidos concluídos, valores totais, e
+   status de repasse (pago pela plataforma / repassado ao parceiro) — só
+   pedidos com status concluído (código validado) entram na lista de
+   elegíveis pra repasse, mesmo sendo esse repasse controlado manualmente
+   pelo admin.
 
 ## Painel do admin
 
@@ -138,7 +171,9 @@ diretamente pelo app.
   (com o técnico a caminho), cobrar uma taxa fixa de cancelamento (usar um
   valor configurável, por exemplo R$ 20) e registrar o pedido como
   "cancelado pelo cliente".
-- Um pedido só pode ser aceito por um parceiro por vez.
+- O cliente vê sempre só 3 opções de borracharia por pedido, nunca uma lista completa — a comparação exaustiva de preço vai contra a velocidade que é o diferencial do produto.
+- Um pedido só pode ter uma borracharia designada por vez. Se a escolhida não confirmar a tempo, a próxima das 3 opções assume automaticamente.
+- O repasse ao parceiro só pode ser marcado depois que o pedido estiver com status "concluído" (código de confirmação validado pelo técnico).
 
 ## Visual
 

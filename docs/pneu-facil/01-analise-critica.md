@@ -95,3 +95,9 @@ Se o cliente cancela depois que o técnico já saiu, alguém perde: gasolina, te
 | No-show/cancelamento | Taxa de cancelamento pós-aceite |
 
 O restante deste documento (escopo do MVP, backend e visual) já foi desenhado incorporando essas correções — não é a ideia original sem filtro, é a versão que tem uma chance real de virar negócio.
+
+## 9. Adendo: como o cliente escolhe a borracharia (decisão tomada depois desta análise)
+
+Numa iteração seguinte, veio a proposta de mostrar ao cliente o preço de cada borracharia (inclusive pneu novo vs. meia-vida) antes de escolher. A tensão que isso levanta: pneu novo tem preço de tabela estável, mas pneu **meia-vida não tem** — é o que sobrou no pátio naquele dia, então um catálogo completo pra "navegar com calma" tende a mostrar preço errado com frequência, além de contradizer a promessa de velocidade que é o diferencial central do produto (comparar catálogo é comportamento de troca planejada, não de emergência na pista).
+
+Decisão tomada: **lista curta pré-filtrada** — o sistema já calcula e mostra só as 3 melhores opções (combinando preço, distância e nota), o cliente escolhe entre poucas em segundos, sem navegar um catálogo inteiro. Isso preserva a velocidade e ainda entrega a transparência de preço antes de qualquer deslocamento. Ver 02-mvp-escopo.md e 03-backend.md pra como isso foi modelado (inclusive a janela curta de confirmação do parceiro, pra lidar com estoque de meia-vida que muda o tempo todo).
