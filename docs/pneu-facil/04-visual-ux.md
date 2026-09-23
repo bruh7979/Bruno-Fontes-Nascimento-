@@ -23,7 +23,7 @@ Consequência de design: **botões grandes, poucos passos, texto curto, nada de 
 5. **Tela de opções** (substitui a antiga "tela de match") — lista curta com as **3 melhores borracharias** (preço + distância + nota já combinados pelo sistema), cada card mostrando: nome, foto/iniciais, nota, distância, ETA, tipo de pneu (chip "Meia-vida" ou "Novo" — meia-vida marcado como "sujeito à conferência no estoque"), preço do pneu + taxa + total. Cliente toca em "Escolher esta". **Não é uma vitrine pra navegar com calma** — só 3 opções, pra manter a velocidade.
 6. **Tela de confirmação do orçamento** — repete o preço da opção escolhida como resumo final, botão "Aprovar" / "Recusar". Aparece **antes** do técnico sair da loja — nunca depois. Recusar aqui é gratuito.
 7. **Tela de pagamento** — Pix/cartão, confirmação. A cobrança acontece aqui, logo após a aprovação, e é o gatilho para o deslocamento começar.
-8. **Tela de acompanhamento por status** (ver 03-backend.md item 4 — sem GPS ao vivo no MVP): lista vertical de etapas com a atual destacada (a caminho, chegou).
+8. **Tela de acompanhamento por status** (ver 03-backend.md item 4 — sem GPS ao vivo no MVP): mapa ilustrativo mostrando o trajeto (posição do técnico é animada/estimada, não coordenada real) + lista vertical de etapas com a atual destacada (a caminho, chegou). O mapa é claramente rotulado como ilustrativo, pra não passar a impressão de rastreamento GPS de verdade.
 9. **Tela de código de confirmação** — aparece durante/logo após a troca: um código grande (4 dígitos) que o cliente mostra ao técnico. O repasse do pagamento à borracharia só é liberado depois que o técnico digita esse código no app dele.
 10. **Tela de avaliação** — nota + comentário opcional.
 

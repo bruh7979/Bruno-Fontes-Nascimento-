@@ -148,7 +148,9 @@ Rastreamento GPS contínuo (pino se movendo em tempo real, tipo Uber) exige atua
 - "Aguardando código de confirmação"
 - "Concluído"
 
-Isso resolve 90% da ansiedade do cliente sem precisar de infraestrutura de tempo real geoespacial. Rastreamento ao vivo no mapa fica pro roadmap pós-MVP (ver 02-mvp-escopo.md, item 8).
+Isso resolve 90% da ansiedade do cliente sem precisar de infraestrutura de tempo real geoespacial. Um detalhe que ajuda bastante sem exigir GPS de verdade: mostrar um **mapa ilustrativo** (rota estimada entre a borracharia e o cliente, com um marcador se movendo de forma animada/estimada, não coordenada real) na tela de status — dá a sensação de acompanhamento sem a complexidade de rastreamento ao vivo. Precisa deixar claro na interface que é ilustrativo, pra não parecer GPS real. Rastreamento ao vivo de verdade fica pro roadmap pós-MVP (ver 02-mvp-escopo.md, item 8).
+
+**Confirmação de conclusão:** no app real, é o técnico quem digita o código no próprio aplicativo dele ao terminar (ver seção 3, passo 7) — esse é o gatilho de verdade. Num protótipo que só cobre a tela do cliente (sem tela de técnico), o passo do técnico precisa ser simulado por algum botão do lado do cliente ("serviço finalizado" / "confirmar conclusão"); isso é uma muleta de protótipo, não o desenho final — na versão real, o cliente só mostra o código, quem digita é o técnico.
 
 ## 5. Pagamento e comissão
 
