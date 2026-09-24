@@ -24,7 +24,7 @@ Consequência de design: **botões grandes, poucos passos, texto curto, nada de 
 6. **Tela de confirmação do orçamento** — repete o preço da opção escolhida como resumo final, botão "Aprovar" / "Recusar". Aparece **antes** do técnico sair da loja — nunca depois. Recusar aqui é gratuito.
 7. **Tela de pagamento** — Pix/cartão, confirmação. A cobrança acontece aqui, logo após a aprovação, e é o gatilho para o deslocamento começar.
 8. **Tela de acompanhamento por status** (ver 03-backend.md item 4 — sem GPS ao vivo no MVP): mapa ilustrativo mostrando o trajeto (posição do técnico é animada/estimada, não coordenada real) + lista vertical de etapas com a atual destacada (a caminho, chegou). O mapa é claramente rotulado como ilustrativo, pra não passar a impressão de rastreamento GPS de verdade.
-9. **Tela de código de confirmação** — aparece durante/logo após a troca: um código grande (4 dígitos) que o cliente mostra ao técnico. O repasse do pagamento à borracharia só é liberado depois que o técnico digita esse código no app dele.
+9. **Tela de código de confirmação** — aparece durante/logo após a troca: um código grande (4 dígitos) que o cliente mostra ao técnico, mais um botão "Confirmar conclusão do serviço" pro próprio cliente encerrar caso prefira. Fecha o pedido o que acontecer primeiro — o técnico digitando o código do lado dele, ou o cliente confirmando aqui —, pra ninguém ficar preso esperando o outro lado. Nessa tela vale a pena dar tempo (não sumir sozinha rápido demais): é o único momento em que o cliente vê o código.
 10. **Tela de avaliação** — nota + comentário opcional.
 
 ## 4. Inventário de telas — Borracharia parceira

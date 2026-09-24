@@ -21,7 +21,7 @@ Este documento assume as correções feitas em [01-analise-critica.md](./01-anal
 6. A borracharia escolhida tem uma janela curta (ex. 60s) pra confirmar — o estoque de pneu meia-vida muda o tempo todo, então pode não estar mais disponível. Se recusar/expirar, o sistema remove essa opção e oferece a próxima melhor da lista original, sem o cliente precisar refazer a busca.
 7. Borracharia confirma → cliente vê o resumo final (o mesmo preço que já tinha visto) e **aprova explicitamente antes de pagar** — nada é cobrado sem esse passo, e recusar aqui não custa nada porque ninguém se deslocou ainda.
 8. Após a aprovação, cobrança automática (Pix/cartão) do valor total (pneu + taxa) → plataforma retém comissão. Só então o técnico se desloca até o cliente → cliente acompanha por status (a caminho / chegou).
-9. Troca realizada no local. Antes de marcar "concluído", o técnico precisa digitar no próprio app um **código de confirmação** que está sendo exibido na tela do cliente — isso é o que libera o repasse do pagamento para a borracharia.
+9. Troca realizada no local. O pedido fecha ("concluído") de dois jeitos possíveis — o que acontecer primeiro: o técnico digita no próprio app o **código de confirmação** que está na tela do cliente, ou o cliente confirma manualmente pelo seu app que o serviço terminou. Nenhum dos dois lados fica bloqueado esperando o outro. É esse fechamento que libera o repasse do pagamento para a borracharia.
 10. Cliente avalia o atendimento (nota + comentário).
 
 ## 3. O que fica **fora** do MVP (cortes deliberados)
@@ -55,7 +55,7 @@ Cortar isso não é limitação técnica — é para não morrer tentando valida
 - **Recusar o orçamento é gratuito**: como isso acontece antes de qualquer deslocamento, ninguém perde dinheiro.
 - **Taxa de cancelamento pós-pagamento**: se o cliente cancelar depois de já ter pago (técnico a caminho), cobra uma taxa mínima (repassada em parte à borracharia).
 - **Confirmação de estoque com janela curta**: a borracharia escolhida tem um prazo curto pra confirmar (o estoque de meia-vida muda o tempo todo); se não confirmar, o pedido cai pra próxima opção da lista automaticamente — nunca fica "preso".
-- **Repasse condicionado ao código de confirmação**: o pagamento só é liberado pra borracharia depois que o técnico digita, no próprio app, o código mostrado na tela do cliente. Isso impede marcar "concluído" sem o serviço ter sido realmente feito no local.
+- **Repasse condicionado à confirmação de conclusão**: o pagamento só é liberado pra borracharia depois que o pedido fecha — pelo técnico digitando o código no app dele, ou pelo cliente confirmando manualmente. O que acontecer primeiro vale; nenhum dos dois lados fica preso esperando o outro.
 - **Nenhum pagamento fora do app** no fluxo oficial (mesmo que tecnicamente alguém possa tentar combinar por fora — o app não deve facilitar isso; é o que garante comissão e proteção a ambos os lados).
 
 ## 7. Métricas de sucesso do MVP (o que decide se a ideia funciona)

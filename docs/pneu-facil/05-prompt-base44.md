@@ -115,11 +115,15 @@ diretamente pelo app.
    sem mapa com localização em tempo real) mostrando a etapa atual: a
    caminho, chegou, em atendimento. Quando a troca começar, mostrar em
    destaque o código de confirmação de 4 dígitos gerado no passo 7, com a
-   instrução de mostrá-lo ao técnico ao final do serviço.
-9. O parceiro só pode marcar o pedido como "concluído" depois de digitar,
-   no próprio app dele, o código de confirmação correto. Só então liberar
-   a tela de avaliação para o cliente (e também uma tela de avaliação do
-   cliente pelo parceiro).
+   instrução de mostrá-lo ao técnico ao final do serviço, e um botão
+   "Confirmar conclusão do serviço" pro próprio cliente encerrar caso
+   prefira.
+9. O pedido vira "concluído" de duas formas possíveis — vale o que
+   acontecer primeiro: o parceiro digita, no próprio app dele, o código
+   de confirmação correto; ou o cliente toca no botão de confirmação do
+   passo 8. Nenhum dos dois lados deve ficar bloqueado esperando o outro.
+   Assim que o pedido fechar, liberar a tela de avaliação para o cliente
+   (e também uma tela de avaliação do cliente pelo parceiro).
 
 ## Fluxo do parceiro (borracharia)
 
@@ -138,9 +142,11 @@ diretamente pelo app.
 5. Só depois que o cliente aprovar e o pagamento for confirmado, o parceiro
    avança o status do pedido pelas etapas seguintes (a caminho → chegou →
    em atendimento).
-6. Pra marcar o pedido como "concluído", o parceiro precisa digitar o
-   código de confirmação de 4 dígitos que o cliente está vendo na tela
-   dele. Sem o código certo, o pedido não pode ser fechado.
+6. O parceiro pode marcar o pedido como "concluído" digitando o código de
+   confirmação de 4 dígitos que o cliente está vendo na tela dele — mas o
+   cliente também pode fechar o pedido por conta própria, então o parceiro
+   não precisa ficar esperando: se o cliente confirmar primeiro, o pedido
+   já aparece como concluído no painel do parceiro.
 7. Painel financeiro mostrando pedidos concluídos, valores totais, e
    status de repasse (pago pela plataforma / repassado ao parceiro) — só
    pedidos com status concluído (código validado) entram na lista de

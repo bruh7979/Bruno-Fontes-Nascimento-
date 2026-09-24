@@ -81,7 +81,7 @@ Duas coisas que o pitch original sugere implicitamente (rastreamento ao vivo tip
 `buscando_parceiro` → `opcoes_apresentadas` → `aceito` → `orcamento_enviado` → `orcamento_aprovado` → `a_caminho` → `chegou` → `em_atendimento` → `concluido`
 (ramos alternativos: `recusado_pelo_cliente` — antes do pagamento, sem custo, pois ninguém se deslocou —, `cancelado_pos_pagamento` — com taxa, técnico já a caminho —, `sem_parceiro_disponivel`)
 
-`concluido` só é atingido com o `codigo_confirmacao` correto digitado pelo técnico — é o que libera o repasse (ver seção 5).
+`concluido` é atingido de dois jeitos possíveis, o que acontecer primeiro: o técnico digita o `codigo_confirmacao` correto no app dele, OU o cliente confirma manualmente pelo próprio app que o serviço terminou. Isso evita que um lado fique bloqueado esperando o outro (ex.: técnico sem sinal pra digitar, ou dificuldade com o app) — qualquer um dos dois fecha o pedido. É o que libera o repasse (ver seção 5).
 
 O orçamento (e a aprovação/cobrança) acontece **antes** de `a_caminho`, não depois — o técnico só sai da loja depois que o cliente já pagou. Essa ordem é deliberada: evita que uma borracharia gaste combustível e tempo indo até um cliente que não concorda com o preço.
 
@@ -150,7 +150,7 @@ Rastreamento GPS contínuo (pino se movendo em tempo real, tipo Uber) exige atua
 
 Isso resolve 90% da ansiedade do cliente sem precisar de infraestrutura de tempo real geoespacial. Um detalhe que ajuda bastante sem exigir GPS de verdade: mostrar um **mapa ilustrativo** (rota estimada entre a borracharia e o cliente, com um marcador se movendo de forma animada/estimada, não coordenada real) na tela de status — dá a sensação de acompanhamento sem a complexidade de rastreamento ao vivo. Precisa deixar claro na interface que é ilustrativo, pra não parecer GPS real. Rastreamento ao vivo de verdade fica pro roadmap pós-MVP (ver 02-mvp-escopo.md, item 8).
 
-**Confirmação de conclusão:** no app real, é o técnico quem digita o código no próprio aplicativo dele ao terminar (ver seção 3, passo 7) — esse é o gatilho de verdade. Num protótipo que só cobre a tela do cliente (sem tela de técnico), o passo do técnico precisa ser simulado por algum botão do lado do cliente ("serviço finalizado" / "confirmar conclusão"); isso é uma muleta de protótipo, não o desenho final — na versão real, o cliente só mostra o código, quem digita é o técnico.
+**Confirmação de conclusão:** por design, tanto o técnico (digitando o código no app dele) quanto o cliente (confirmando manualmente no próprio app que o serviço terminou) podem fechar o pedido — vale o que acontecer primeiro. Num protótipo que só cobre a tela do cliente (sem tela de técnico ainda), o caminho "técnico digita o código" é simulado por um temporizador (representando o técnico confirmando do lado dele em paralelo), enquanto o botão do cliente já é o comportamento real, não uma muleta.
 
 ## 5. Pagamento e comissão
 
